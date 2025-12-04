@@ -83,7 +83,7 @@ Use the generic profiler:
 
 ```bash
 python -m benchmarks.profiler \
-  --op elementwise_add \
+  --op vec_add \
   --backend both \
   --dtype float16 \
   --device cuda \
