@@ -5,7 +5,7 @@ import time
 
 import torch
 
-from triton_kernels.ops import OP_REGISTRY, BaseOp
+from kernels.ops import OP_REGISTRY, BaseOp
 
 
 def build_parser() -> argparse.ArgumentParser:

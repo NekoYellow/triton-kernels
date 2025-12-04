@@ -121,7 +121,7 @@ The script will:
 
 ## Adding a new operator
 
-1. Create a new file in `triton_kernels/ops`, for example `my_op.py`
+1. Create a new file in `kernels/ops`, for example `my_op.py`
 2. Implement your Triton kernel and a Python wrapper
 3. Define an op class inheriting `BaseOp` and decorated with `@register_op`
 4. Import your class in `triton_kernels/ops/__init__.py` so it gets registered
