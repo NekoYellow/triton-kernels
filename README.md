@@ -1,7 +1,5 @@
 # triton-kernels
 
-# triton_kernels
-
 A small personal library of Triton kernels, organized like a competitive programming template repo.
 Each operator (op) has:
 
