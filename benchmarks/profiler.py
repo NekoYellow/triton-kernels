@@ -32,9 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Whether to run correctness check")
 
     # Simple microbenchmark options
-    parser.add_argument("--warmup-iters", type=int, default=10,
+    parser.add_argument("--warmup-iters", type=int, default=3,
                         help="Warmup iterations for simple wall-clock timing")
-    parser.add_argument("--iters", type=int, default=100,
+    parser.add_argument("--iters", type=int, default=30,
                         help="Timed iterations for simple wall-clock timing")
 
     # Common shape parameters (ops can decide which ones to use)
@@ -48,7 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     # Profiler schedule options (simple)
     parser.add_argument("--profiler-warmup-steps", type=int, default=2,
                         help="Warmup steps used by torch.profiler schedule")
-    parser.add_argument("--profiler-active-steps", type=int, default=8,
+    parser.add_argument("--profiler-active-steps", type=int, default=3,
                         help="Active steps used by torch.profiler schedule")
 
     # Trace output options
