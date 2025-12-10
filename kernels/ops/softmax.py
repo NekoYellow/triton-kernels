@@ -6,9 +6,10 @@ import triton.language as tl
 
 from .base import BaseOp, OpConfig, register_op
 
-DEVICE = torch.device("cuda")
+DEVICE = torch.device("cuda:0")
 properties = triton.runtime.driver.active.utils.get_device_properties(DEVICE.index)
 NUM_SM = properties["multiprocessor_count"]
+PROGRAM_PER_SM = 4
 
 
 # ===================== Kernel ===================== #
@@ -16,19 +17,19 @@ NUM_SM = properties["multiprocessor_count"]
 @triton.autotune(
     configs=[
         triton.Config(
-            {"BLOCK_SIZE": 1024},
+            {}, # {"BLOCK_SIZE": 1024},
             num_warps=4,
             num_stages=2,
             num_ctas=1,
         ),
         triton.Config(
-            {"BLOCK_SIZE": 1024},
+            {}, # {"BLOCK_SIZE": 1024},
             num_warps=8,
             num_stages=2,
             num_ctas=2,
         ),
         triton.Config(
-            {"BLOCK_SIZE": 1024},
+            {}, # {"BLOCK_SIZE": 1024},
             num_warps=8,
             num_stages=4,
             num_ctas=4,
@@ -45,18 +46,18 @@ def softmax_kernel(
 ):
     row_start = tl.program_id(0)
     row_step = tl.num_programs(0)
-    for row_idx in tl.range(row_start, n_rows, row_step, num_stages=num_stages):
-        row_start_ptr = input_ptr + row_idx * in_row_stride
+    for row_idx in tl.range(row_start, n_rows, row_step):
+        row_start_ptr = in_ptr + row_idx * in_row_stride
         col_offsets = tl.arange(0, BLOCK_SIZE)
         in_ptrs = row_start_ptr + col_offsets
         mask = col_offsets < n_cols
         row = tl.load(in_ptrs, mask=mask, other=-float("inf"))
-        row = tow - tl.max(row, axis=0)
+        row = row - tl.max(row, axis=0)
         numerator = tl.exp(row)
         denumerator = tl.sum(numerator, axis=0)
         out = numerator / denumerator
         out_row_start_ptr = out_ptr + row_idx * out_row_stride
-        out_prts = out_row_start_ptr + col_offsets
+        out_ptrs = out_row_start_ptr + col_offsets
         tl.store(out_ptrs, out, mask=mask)
 
 
@@ -67,10 +68,9 @@ def triton_softmax(x: torch.Tensor) -> torch.Tensor:
     y = torch.empty_like(x)
 
     def grid(meta):
-        num_ctas_per_sm = meta["num_ctas"]
-        num_programs = NUM_SM * num_ctas_per_sm
+        num_programs = NUM_SM * PROGRAM_PER_SM
         num_programs = min(num_programs, n_rows)
-        return (num_programs,)
+        return (num_programs, )
 
     softmax_kernel[grid](
         x, y,
@@ -112,7 +112,7 @@ class SoftmaxOp(BaseOp):
 
     @staticmethod
     def torch_impl(x):
-        return torch.softmax(x)
+        return torch.softmax(x, dim=-1)
 
     @staticmethod
     def triton_impl(x):
