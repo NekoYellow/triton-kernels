@@ -112,7 +112,11 @@ class SoftmaxOp(BaseOp):
 
     @staticmethod
     def torch_impl(x):
-        return torch.softmax(x, dim=-1)
+        x_max = torch.max(x, dim=-1, keepdim=True).values
+        x = x - x_max
+        num = torch.exp(x)
+        den = torch.sum(num, dim=-1, keepdim=True)
+        return num / den
 
     @staticmethod
     def triton_impl(x):
